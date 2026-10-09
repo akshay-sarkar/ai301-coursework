@@ -96,6 +96,8 @@ So `except ValueError` covers both the issue's case and the truncated-hash case 
 
 The code change matches the plan. `verify_password` wraps `pwd_context.verify` in `try/except ValueError` and returns `False`, the `xfail` marker is gone from `test_verify_with_wrong_hash_format`, and `test_verify_with_malformed_bcrypt_hash` is added right after it. No other files changed. The diff is 2 files: `core/security.py` (+6/-1) and `tests/unit/test_security.py` (+4/-4).
 
-One difference from Approach step 5: I ran the test plan and the full `tests/unit/test_security.py` file (26 passed) but didn't run the repo-wide `make check`. The change touches only `verify_password`, and its one caller (`api/routes/auth.py`) already treats `False` as invalid credentials, so I relied on the security test file and the repro for this unit. I'll run `make check` before opening the PR in Unit 4.
+One difference from Approach step 5: I ran the test plan and the full `tests/unit/test_security.py` file (26 passed) but didn't run the repo-wide `make check`. The change touches only `verify_password`, and its one caller (`api/routes/auth.py`) already treats `False` as invalid credentials, so I relied on the security test file and the repro for this unit.
+
+Update before opening the PR (Unit 4): instead of `make check`, I ran the four checks the PR template lists. `make test-unit` gave 377 passed and 52 xfailed (other seeded bugs). `make test-integration` gave "no tests ran" (no integration tests exist yet). `make lint` passed, and `make typecheck` found no issues. I skipped `make check` because its `format` step runs black, which can rewrite files outside this fix and add unrelated churn to the diff. `make lint` and `make typecheck` cover the same lint and type checks. The code itself didn't change, so the diff is still the 2 files above.
 
 The posted plan is still accurate, so I didn't add a follow-up comment on the issue.
