@@ -55,10 +55,9 @@ happened; these entries are the toolkit's own timeline.
 All four entries are graded. Keep every heading below, and fill each
 one in the week it belongs to.
 
-**Unit 5: [one line on the tool work]**
+**Unit 5: Built issue-scout (six authored gh queries plus ranked filters) and patched its strategy and rubric after the first live scan**
 
-[2-4 sentences: what you built (the scout, your strategy), what broke
-or fell short, what changed because of it.]
+On 2026-10-22 I installed the scout over my Unit 1 issue-select skill. I rewrote my fit profile for all of GitHub (TypeScript/React/Node first, Python second) and wrote six `gh search issues` queries, each traced to a profile sentence, plus ranking rules (drop assigned, stale, discussion-labelled, or 10+-comment issues; rank established-project results and `bug` labels first, then fewest comments). Before the scan, a raw API check showed that "fewest comments first" surfaced brand-new personal repos, so I added an owner-scoped query for maintained TS/JS projects (vitest, eslint, mui, TanStack, storybook, …). The first scan then graded 5 and accepted 2, but all 3 rejects were years-old query-1 issues with fresh drive-by claims, and both accepts were false positives (mui-x#9493 was already fixed on master, and code-charity/youtube#4411's labels are stamped on by its bug template), so I bounded query 1 by date and age, and added a required `not_already_fixed` check and a template-label rule to `issue_wanted` in my rubric.
 
 **Unit 6: [one line on the tool work]**
 
