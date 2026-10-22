@@ -1,4 +1,4 @@
-# Contribution: [Issue Title]
+# Contribution: Tests: init vitest tests to run in angular context || remove karma
 
 Path: `beat-2-contribution/contribution-story.md`
 
@@ -8,10 +8,9 @@ format criteria grade exactly that. Your course repo link is the whole submissio
 files and no evidence uploads are part of Assignment 5.
 
 **Contribution Number:** [1]
-**Student:** [Student name]
-**GitHub Username:** [your GitHub username, exactly as it appears on your profile - no @, no
-profile URL. Your comments upstream are identified by this name.]
-**Issue:** [GitHub issue link]
+**Student:** Akshay Sarkar
+**GitHub Username:** akshay-sarkar
+**Issue:** https://github.com/Babali42/DrumBeatRepo/issues/611
 **Pull Request:** [GitHub PR link, once opened]
 
 One repository, built across units 5 to 8, telling the whole story of your real
@@ -79,24 +78,18 @@ drafted, what you did with the draft.]
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs in your own words: how you searched, what your scan
-surfaced, what your scout's verdict said, why this issue fits your
-profile, and what you hope to learn. If your scout's verdict on it
-was reject and you chose it anyway, say so here and say why; choosing
-against your own tool silently is what loses points. Close with an
-honest read of the tool itself: where the scout fell short on a real
-wild search and what you changed or would change, or what convinced
-you it held up. **Record the link to your claim comment in this section too.**
-Not claimed yet? Write `claim pending` and today's date where the link goes,
-and add the link the moment your claim lands.]
+I searched in two passes. My scout's first scan (six `gh search issues` queries from my fit profile, ranked by my filters) graded five issues and accepted two, but both were false positives: mui-x#9493 was already fixed on master, and code-charity/youtube#4411's labels are stamped on by its bug template. I patched the rubric for both. My first three picks from the Issue Selection site were all rejected: logixia#31 and nanocoder#1143 already had someone on them, and devtrack#164 was already fixed on main, caught by the `not_already_fixed` check I'd just added. Popular-repo good first issues kept losing the same way, so I changed tactics. I intersected the site's JS/TS list with a GitHub search for open issues with no assignee, no linked PR, and 0–1 comments. Eight of those candidates (meteor, three in backstage, hiero, es-git, npmx, swisspost) still had an open PR or a recent claim. Babali42/DrumBeatRepo#611 was the one that didn't. My scout graded it **accept** on all 7 required checks: opened by the owner on Oct 15, nobody on it, not fixed (`npm test` still runs Karma and nothing uses `TestBed`), and two acceptable solutions stated by the owner.
+
+It fits my profile because it's TypeScript and test-runner tooling, the "developer tooling such as test runners" my profile names. It's Angular rather than React, which I want to learn. I'm taking the owner's first option (configure Vitest for Angular `TestBed` with an example service test) and not the full Karma removal, because the scout pointed out that option B means porting about 15 spec files and changing CI, which is bigger than "small and well bounded". On the tool itself: across three gradings the scout's verdicts held up when I checked them against the threads, and the two fixes from scan 1 caught real cases on later issues. But it still can't judge size. `scope_bounded` passed both options here, even though one is a migration. A size check for "either/or" issues is the next change I'd make.
+
+**Claim comment:** https://github.com/Babali42/DrumBeatRepo/issues/611#issuecomment-6331477037
 
 **Toolkit**
 
-- Tool: issue-scout (your scout: your search strategy, your rubric),
-  and how you used it
-- What it produced: [the scan and its verdict on this issue, described]
-- Difficulties: [where it fell short, or "none met" if none did]
-- What changed: [what you patched or would update, or "nothing"]
+- Tool: issue-scout (my search strategy and rubric). I ran one scan, graded three site picks, then graded #611 directly. I found #611 by cross-checking the Issue Selection site against a GitHub search filtered to no assignee, no linked PR, and 0–1 comments.
+- What it produced: scan 1 accepted 2 of 5 (both false positives); the three site picks were all rejected on one required check each; #611 was accepted on 7/7 required and 3/3 preferred checks.
+- Difficulties: scan 1 couldn't see bugs already fixed on master or labels added by issue templates, and passed a one-commit practice repo (logixia). Popular good first issues were almost always claimed or had an open PR, which the ranking stage can't see.
+- What changed: I added `not_already_fixed`, a template-label rule in `issue_wanted`, and a repo-history clause in `repo_in_use`; I bounded query 1 by date and issue age. Still to do: a size check in `scope_bounded` for issues that offer a small option and a migration option.
 
 ---
 
