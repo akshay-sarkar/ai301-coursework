@@ -11,7 +11,7 @@ files and no evidence uploads are part of Assignment 5.
 **Student:** Akshay Sarkar
 **GitHub Username:** akshay-sarkar
 **Issue:** https://github.com/Babali42/DrumBeatRepo/issues/611
-**Pull Request:** [GitHub PR link, once opened]
+**Pull Request:** https://github.com/Babali42/DrumBeatRepo/pull/623
 
 One repository, built across units 5 to 8, telling the whole story of your real
 contribution. Fill it as you work, not at the end — the sections below ask for evidence that
@@ -62,10 +62,9 @@ On 2026-10-22 I installed the scout over my Unit 1 issue-select skill. I rewrote
 
 I added an Upstream section to my voice guide (claims, questions, pings, each with a wrong/right pair) and wired `check_voice.py` as a PreToolUse hook, which stopped `gh issue comment --help` in the wiring test as intended. What fell short: I had already posted my #611 claim through the GitHub website, so the guard never saw it; I ran `check_voice.py --draft` on the posted text afterwards (it passed) and now post through Claude Code. My `CLAUDE.local.md` for DrumBeatRepo records what took me a while to find: there's no CONTRIBUTING.md, so CI's `angular-test` action defines "all tests"; a `test-vitest` script already exists; Karma needs a Scala-built `engine/main.js`; and Angular 22 rejects my default Node 25. After the owner replied I updated it to say: reuse `test-vitest` and leave `npm test` alone.
 
-**Unit 7: [one line on the tool work]**
+**Unit 7: Installed the ship-gate, wrote a 3-check manifest from DrumBeatRepo's CI, and opened PR #623 after the gate passed**
 
-[2-4 sentences: the ship-gate and your gate manifest. What it produced
-on your real branch, what fought you, what changed because of it.]
+My manifest runs `npm ci`, lint and `test-vitest-coverage` (from `.github/actions/angular-test` and the `angular-lint` action) and excludes Karma with a dated reason, because it needs the Scala-built `engine/main.js` and Chromium. Two things fought me: Homebrew upgrading `simdjson` broke both my default Node 25 and the `node@24` keg, so I moved to Node 26 (what CI uses) and dropped the PATH prefix from every row; and lint picked up the gitignored `coverage/` HTML report, so the lint row now runs `rm -rf coverage` and comes first. Before the gate, my voice guard stopped `pr_draft.md` four times on my own rules ("Nothing else in the file changes", "before" figures without pasted output, left-out items outside Notes for Reviewers, and "the five changes above are the five my plan listed"), and I fixed each line. The gate then passed (3/3 repo checks, pr-precheck accept on all 6), with one note my rubric can't fail: the plan promised to name the lockfile's transitive bumps and the description doesn't, which is the rubric gap I'd close next.
 
 **Unit 8: [one line on the tool work]**
 
@@ -173,93 +172,104 @@ Error: Need to call TestBed.initTestEnvironment() first
 
 **Analysis**
 
-[Your analysis of the root cause: what is causing the issue, traced
-to the files and functions involved.]
+`npm run test-vitest` runs Vitest with `frontend/vitest.config.ts`, which only sets `include: ['./**/*.spec.vite.ts']`, `globals: true` and coverage. It has no `setupFiles` and no `environment`, so two things Angular's `TestBed` needs never happen. First, nothing calls `getTestBed().initTestEnvironment(...)`. Under Karma, the `@angular/build:karma` builder does that, but under Vitest nobody does, so the first `TestBed.configureTestingModule({})` throws `Need to call TestBed.initTestEnvironment() first` (my repro on `02d0367`). Second, Vitest's default environment is Node, which has no `document`. Angular's browser testing platform injects `DOCUMENT`, and `PlayerEventsService` listens to `fromEvent(document, 'keydown')`. The repro's control shows Vitest itself works: the 5 existing specs pass (30 tests), but none uses `TestBed` (`git grep` exit 1), because they test plain classes built with `new`.
 
 **Proposed Solution**
 
-[High-level description of your fix approach, and what you are
-deliberately NOT changing.]
+Add the missing test environment to the Vitest setup and prove it with one example, the owner's "make the TestBed and the first try":
+- a new `frontend/src/test-setup.vite.ts` that imports `@angular/compiler` and calls `getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting())`;
+- `environment: 'jsdom'` and `setupFiles` in `vitest.config.ts`;
+- `jsdom` as a devDependency;
+- `player.events.service.spec.vite.ts` as the first `TestBed` example, mirroring the three cases of its Karma spec;
+- one README line under "How to test it".
+
+I'm deliberately NOT changing:
+- `npm test` or the `test-vitest` scripts (the owner asked me to reuse `test-vitest`);
+- any Karma `*.spec.ts`, including the sequencer tests the owner left for later;
+- `karma.conf.js`, `angular.json`, `tsconfig.spec.json`, CI, or the Scala `engine/`.
+
+I'm also not adding zone.js or the Analog Vitest plugin, which I expect a service test won't need. Components are out of scope.
 
 **Implementation Plan**
 
-1. [Modify file X to do Y]
-2. [Add or change Z]
-3. [Update tests]
+1. Sync my fork with upstream `main` (`9ea0e66`; nothing since `02d0367` touches Vitest) and branch `test/611-vitest-testbed`.
+2. Add `src/test-setup.vite.ts`, and point `vitest.config.ts` at it with `environment: 'jsdom'`.
+3. `npm install --save-dev jsdom@^30.1.3`.
+4. Add `player.events.service.spec.vite.ts` with the three TestBed cases (created; Space keydown emits `'toggle'`; other keys don't emit).
+5. Add the README line.
+6. Re-run the repro spec, `npm run test-vitest-coverage` and `npm run lint`, and save the output to `test_evidence.md`.
 
-[Record deviations here as they happen: what changed mid-build and
-why. A recorded deviation is honest work; silent drift is not.]
+Deviations: no change to the code plan. The diff is the planned 6 files in 3 commits (`04e22b5` setup + config + `jsdom`, `cba3dc3` example spec, `2faea70` README). The setup file plus `jsdom` was enough, so no zone.js or Analog plugin was needed. Two environment differences: I branched from the updated upstream `main` (`9ea0e66`, synced 2026-10-31) instead of `02d0367`, and I built on Node 26.13.0 instead of Node 24 after Homebrew broke the `node@24` keg. Both are recorded in `plan.md` and in the PR's Notes for Reviewers.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: plan-check (my unit 3 skill with the wild-repo scope), run on `plan.md` + `plan-comment.md`. Before writing the plan, I had Claude prototype the setup in a throwaway clone, so the plan rests on a fix I'd seen work rather than a guess.
+- What it produced: accept, with all 6 required checks passing. It confirmed the cause matches the repro error and the control, and that the plan follows all three points of the owner's reply (reuse `test-vitest`, "the TestBed and the first try", sequencer tests later).
+- Difficulties: its voice notes caught that my plan comment said "reproduced on `02d0367`" with no output to point to (I'm not posting a repro comment), and that "doesn't need zone.js/Analog" was stated as fact before my own run. It also found that npm was crashing on my machine (`libsimdjson.30.dylib` missing after Homebrew upgraded `simdjson` while installing `node@24`), and it flagged two procedure gaps: no rule for wild issues without a posted repro, and no check that a pinned package version exists.
+- What changed: I pasted the 4-line error into the comment, moved the zone.js/Analog claim into Risks, reinstalled Node, and pinned Node 24 in my shell profile and in every manifest command.
 
 ---
 
 ## Testing Strategy
 
-[What observable checks prove the fix: your reproduction steps re-run
-against the built change (before and after), and the repo's own test
-suite or checks with the outcome shown. "Tests pass" with nothing
-observable named is not a strategy.]
+Three observable checks prove the fix, all run on Node 26.13.0 (the major version CI uses).
+
+1. **The repro trigger, before and after.** `npm run test-vitest -- run src/app/ui/services/space-bar-behaviour/player.events.service.spec.vite.ts`. Before (`main` at `02d0367`), it fails with `Error: Need to call TestBed.initTestEnvironment() first` and `Tests 1 failed (1)`. After (branch), `Test Files 1 passed (1)` and `Tests 3 passed (3)`. The three tests are: the service is created via `TestBed.inject`; a Space keydown dispatched on `document` emits `'toggle'` (this needs jsdom's `document`, so it proves the environment, not just the setup file); and other keys don't emit.
+2. **The whole Vitest suite with coverage, as a control.** Before (`main` at `9ea0e66`): `Test Files 5 passed (5)`, `Tests 30 passed (30)`. After: `Test Files 6 passed (6)`, `Tests 33 passed (33)`, coverage table written (`All files | 88.28 | 64.28 | 78.94 | 88.57`). This shows the new jsdom environment and setup file didn't break any existing plain-class spec.
+3. **Lint, compared with `main`.** `npm run lint` gives `0 errors and 3 warnings` on both `main` and the branch (limit `--max-warnings=30`). The 3 warnings are in `audio-engine.adapter.ts` and `sequencer.service.ts`, which I didn't touch.
+
+Not run locally: Karma (`npm run test-ci`), which needs the Scala-built `engine/main.js` and Chromium. My diff adds no `*.spec.ts` and doesn't change Karma's config (`tsconfig.spec.json` only includes `src/**/*.spec.ts`), so CI's `angular-test` job is the check there. My ship-gate ran checks 2 and 3 plus `npm ci` from a fresh shell and passed (`ok (6s)`, `ok (3s)`, `ok (6s)`).
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: my ship-manifest (three CI-sourced checks, Karma excluded with a dated reason), run by hand and then by the ship-gate; outputs saved in `test_evidence.md`.
+- What it produced: before/after for the trigger (1 failed to 3 passed), the suite going from 30 to 33 passing tests with coverage intact, and identical lint counts on `main` and the branch.
+- Difficulties: my first "no TestBed in any Vitest spec" check was a zsh-globbed `grep` that never ran; `npx eslint .` listed the gitignored `coverage/` HTML report as if it were source; and my baseline Node changed mid-unit (24 to 26) when Homebrew broke the keg.
+- What changed: I switched to `git grep` (committed files only), made the lint row clear `coverage/` first, and re-ran the `main` baseline on Node 26 so before and after use the same runtime for the suite and lint.
 
 ---
 
 ## Implementation Notes
 
-[A running log, added to as you work. Date each entry. What you
-built, decisions you made when you made them, wrong turns included.]
+**2026-10-22**
 
-**[Date]**
+Claimed #611 (option A). The owner replied the same day: reuse `test-vitest`, aim for "the TestBed and the first try", leave the sequencer Karma tests for later. Forked and reproduced on `02d0367` under Node 24 (`Need to call TestBed.initTestEnvironment() first`). Found that `test-vitest` already exists, so no script change is needed.
 
-[Entry]
+**2026-10-31**
 
-**[Date]**
+Synced my fork to upstream `main` (`9ea0e66`), checked that nothing since `02d0367` touches Vitest, and branched `test/611-vitest-testbed`. Decision: no zone.js and no Analog plugin, because Claude's prototype in a throwaway clone showed a setup file plus `jsdom` was enough for a service. Wrong turn: adding only the setup file moved the error to Angular's `DOCUMENT` injection, so `environment: 'jsdom'` was needed too. Environment detour: Homebrew's `simdjson` upgrade broke `npm` on Node 25 and then the `node@24` keg, so I rebuilt and tested on Node 26 (CI's version) and re-ran the `main` baseline there (still 5 files / 30 tests).
 
-[Entry]
+**2026-10-31**
+
+Built in 3 commits through Claude Code, reading each diff: `04e22b5` (setup file, `vitest.config.ts`, `jsdom`), `cba3dc3` (the three-case `PlayerEventsService` spec, using `firstValueFrom` instead of Jasmine's `done`), and `2faea70` (README line). Decision: commit the lockfile exactly as `npm install --save-dev jsdom@^30.1.3` produced it (+507/-8, transitive `parse5`/`entities` updates), not hand-edited. Ran the evidence, iterated `pr_draft.md` through the voice guard until it passed, ran the ship-gate (PASS), pushed, and opened PR #623.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: Claude Code with my `CLAUDE.local.md`, for the edits (one prompt with the five exact changes, then I reviewed the diff); my voice guard and ship-gate hooks before the PR.
+- What it produced: a 6-file, 3-commit branch matching the plan, and a reviewer-facing note from Claude worth checking (the 8 deleted lockfile lines, the `git add -N` it ran to show new files in the diff, and the unsubscribe placement in the KeyA test).
+- Difficulties: Claude ran `git add -N` to show the new files, which I had to undo before committing; the Homebrew/Node breakage cost the most time; and `git log` output kept disappearing into the pager.
+- What changed: I reset the index before staging each commit by hand, pinned my shell to Homebrew's default Node 26, and used `git --no-pager` for the evidence commands.
 
 ---
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when opened]
+**PR Link:** https://github.com/Babali42/DrumBeatRepo/pull/623
 
-**PR Description:** [what the PR says; much of the content above
-adapts into it]
+**PR Description:** "test: run Angular TestBed specs under Vitest", `Fixes #611`. It explains that `vitest.config.ts` had no setup file (so nothing called `TestBed.initTestEnvironment()`) and no DOM environment, and lists the five changes: `src/test-setup.vite.ts`, `environment: 'jsdom'` + `setupFiles` in `vitest.config.ts`, `jsdom` as a devDependency, the `PlayerEventsService` TestBed spec, and a README line. Testing pastes the trigger before (`Need to call TestBed.initTestEnvironment() first`) and after (`Tests 3 passed (3)`), the suite before/after (30 to 33 passing), and lint on `main` and the branch (same 3 warnings), and says Karma wasn't run locally and why. Notes for Reviewers lists what's left out on purpose (`npm test`, Karma specs and config, CI, `engine/`, components), the plan differences (branched from `9ea0e66`, built on Node 26), and how I used AI.
 
 **Maintainer Feedback:**
 
-- [Date]: [feedback received, or "none yet"; silence is a normal
-  state and costs you nothing]
-- [Date]: [how you addressed it]
+- 2026-10-31: no maintainer review yet. CI passed on the PR (https://github.com/Babali42/DrumBeatRepo/actions/runs/41251300883), including the Karma job I couldn't run locally, which confirms the change didn't affect the Karma specs.
 
-**Status:** [Awaiting review / Iterating / Merged / Closed. The
-status is a fact you record, never a grade: the PR is graded as
-opened.]
+**Status:** Awaiting review
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: the ship-gate hook (`check_gate.py --branch`) running my 3-check manifest and my unit 4 pr-precheck in live mode; my voice guard on `pr_draft.md`; then `gh pr create` through Claude Code so both hooks saw it.
+- What it produced: `ship-gate: PASS` (3/3 repo checks; pr-precheck accept on plan-fidelity, description-matches-diff, decisive-evidence, clean-diff and standards-honored, plus repo-checks-shown), then PR #623 opened on the upstream repo, not my fork.
+- Difficulties: the hook test showed only the ship-gate's stop, not the voice guard's (both are registered in `settings.json`, so Claude Code probably reported only the first block). The voice guard stopped my draft four times on my own PR rules, and pr-precheck flagged a plan promise (naming the lockfile's transitive bumps) that my rubric can't fail.
+- What changed: I rewrote each flagged line in `pr_draft.md` instead of loosening the guard. I kept the gate's 30-minute pass by not editing the draft afterwards, and noted a new rubric check to add: a plan promise that isn't met and isn't recorded as a deferral.
 
 ---
 
