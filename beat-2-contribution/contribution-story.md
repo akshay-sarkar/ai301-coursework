@@ -66,10 +66,9 @@ I added an Upstream section to my voice guide (claims, questions, pings, each wi
 
 My manifest runs `npm ci`, lint and `test-vitest-coverage` (from `.github/actions/angular-test` and the `angular-lint` action) and excludes Karma with a dated reason, because it needs the Scala-built `engine/main.js` and Chromium. Two things fought me: Homebrew upgrading `simdjson` broke both my default Node 25 and the `node@24` keg, so I moved to Node 26 (what CI uses) and dropped the PATH prefix from every row; and lint picked up the gitignored `coverage/` HTML report, so the lint row now runs `rm -rf coverage` and comes first. Before the gate, my voice guard stopped `pr_draft.md` four times on my own rules ("Nothing else in the file changes", "before" figures without pasted output, left-out items outside Notes for Reviewers, and "the five changes above are the five my plan listed"), and I fixed each line. The gate then passed (3/3 repo checks, pr-precheck accept on all 6), with one note my rubric can't fail: the plan promised to name the lockfile's transitive bumps and the description doesn't, which is the rubric gap I'd close next.
 
-**Unit 8: [one line on the tool work]**
+**Unit 8: Installed the PR monitor, wrote a playbook from DrumBeatRepo's real merge times, and rewrote its merged-PR draft into a short follow-up**
 
-[2-4 sentences: the PR-monitor and your playbook. What it read, what it
-drafted, what you did with the draft.]
+My playbook's 5-day first-response threshold comes from the repo's 5 latest merged outside-contributor PRs (#625, #589, #583, #582, #578, all merged within 0–2 days), and its response and nudge rules come from my voice guide's Upstream section. `--state` read PR #623 as MERGED (7 checks passing, 5 thread items), and the full run drafted a "close the loop" move: a thanks, a conditional "if #611 didn't close automatically", and two follow-up items. What fell short: the monitor couldn't see the issue's state, so it hedged; I checked #611 myself, found it already closed, and cut that paragraph. I also cut the follow-up offers, because this contribution is done, and when my voice guard stopped the one-line thanks for naming nothing specific to the PR, I named `src/test-setup.vite.ts` and posted it through Claude Code.
 
 ---
 
@@ -261,8 +260,11 @@ Built in 3 commits through Claude Code, reading each diff: `04e22b5` (setup file
 **Maintainer Feedback:**
 
 - 2026-10-31: no maintainer review yet. CI passed on the PR (https://github.com/Babali42/DrumBeatRepo/actions/runs/41251300883), including the Karma job I couldn't run locally, which confirms the change didn't affect the Karma specs.
+- 2026-10-31: CodeRabbit (automated review) passed 4 checks and warned on one: its "Linked Issues" check said the issue's acceptance criterion "`npm test` runs using Vitest" isn't met because `npm test` still runs Karma. That was a deliberate choice: the owner told me on the issue to reuse `test-vitest`, and my PR's Notes for Reviewers says `npm test` is left out on purpose. Codecov reported all modified and coverable lines covered.
+- 2026-10-31: The owner, @Babali42, thanked me ("really helpful because unit test infrastructure can be time consuming"), said he'll reuse the setup with a test in a future feature (translating drum part names, e.g. kick to "grosse caisse"), and welcomed the added coverage. He also said that at this level of quality he didn't need the AI disclosure, because the work was well tested and understood, and that he's been receiving "AI flood PRs". He merged the PR as `d8f78fb` and added me as a contributor for code and test via all-contributors (PR #624). No changes were requested, so there was nothing to address.
+- 2026-11-05: My PR monitor drafted a merged-PR follow-up with a conditional "if #611 didn't close automatically" paragraph. I checked the issue, found it already closed, and dropped that part. I also dropped the follow-up offers, since I'm not taking on more work here, and posted a one-line thanks for the merge and the contributor credit: https://github.com/Babali42/DrumBeatRepo/pull/623#issuecomment-6674004279
 
-**Status:** Awaiting review
+**Status:** Merged (2026-10-31, `d8f78fb`)
 
 **Toolkit**
 
@@ -277,25 +279,31 @@ Built in 3 commits through Claude Code, reading each diff: `04e22b5` (setup file
 
 **Technical Skills Gained**
 
-[What you learned technically, named concretely.]
+- How Angular's `TestBed` actually gets initialized. Karma's `@angular/build:karma` builder calls `initTestEnvironment` for you, so I'd never had to think about it. Under Vitest I wrote that one line myself (`getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting())`, plus `import '@angular/compiler'` for JIT), and learned that the browser testing platform also needs a DOM, which is why `environment: 'jsdom'` was the second half of the fix.
+- Reading a repo's real rules from CI when there's no CONTRIBUTING.md. `.github/actions/angular-test/action.yml` told me exactly which commands "pass all tests" meant (Karma headless, then Vitest with coverage, then Codecov), and became the rows of my ship manifest.
+- Practical git hygiene on a fork: `gh repo fork --clone` for `origin`/`upstream`, fast-forwarding my fork to upstream before branching, `.git/info/exclude` for working files that must never be committed, `git grep` to search only committed files, and `gh repo set-default` so the PR opened upstream, not on my fork.
+- Writing evidence a reviewer can check: the same command before and after, a control run, and the same check (lint) run on `main` and the branch, instead of "tests pass".
 
 **Challenges Overcome**
 
-[What was hard and how you solved it; point at the real events, the
-Toolkit blocks above are full of them.]
+- Finding an issue nobody had already taken. My scout's first scan and my first three site picks all failed, mostly on `nobody_on_it` or `not_already_fixed`. I switched to cross-checking the site's list against a GitHub search for issues with no assignee, no linked PR and 0–1 comments, and #611 was the one that held up.
+- An ambiguous acceptance criterion. The issue said "`npm test` runs using Vitest", which didn't fit the small option. I asked the owner one concrete question in my claim instead of guessing, and he answered the same day: reuse `test-vitest`, leave `npm test` on Karma.
+- My machine fighting me. Angular 22 rejected my Node 25; installing `node@24` upgraded `simdjson`, which broke Node 25's npm; reinstalling Node then broke `node@24`. I ended on Homebrew's default Node 26, which is also what CI uses, and recorded the change as a deviation.
+- My own tools pushing back. The voice guard stopped my PR description four times on my own rules (an "exactly as planned" style line, "before" numbers with no pasted output, left-out items outside Notes for Reviewers). Each stop was right, and the final description was better for it.
 
 **What I'd Do Differently Next Time**
 
-[Reflection on your process.]
+- Check the toolchain first. I'd confirm the repo's supported Node range and match CI's version on day one, before installing anything, instead of discovering the mismatch through `EBADENGINE` warnings mid-repro.
+- Write the PR description against my voice guide from the start, rather than drafting freely and letting the guard catch fidelity claims. Most of the stops were the same kind of mistake.
+- Check a tool's hedges against the source before acting on them. My PR monitor couldn't see whether #611 had closed, and an automated page fetch I tried returned a stale copy that still showed it open. Checking the live issue myself settled it.
+- Keep disclosing AI use even when a maintainer says it isn't needed. The owner said my disclosure was unnecessary at this quality, but he also mentioned getting "AI flood PRs". Being specific about what the AI did and what I checked is part of what made this PR different from those.
 
 ---
 
 ## Resources Used
 
-[What actually helped, not a reading list. List things this story
-already shows you using: the doc you followed to set the environment
-up, the thread that explained the bug, the person who answered you.
-One real entry beats ten plausible ones.]
-
-- [Link to documentation that helped]
-- [Discussion, issue, or post that helped]
+- The issue thread itself, especially the owner's reply on 2026-10-22, which settled the scope (reuse `test-vitest`, "the TestBed and the first try", sequencer tests later): https://github.com/Babali42/DrumBeatRepo/issues/611
+- DrumBeatRepo's CI action, which defined "pass all tests" for my manifest: `.github/actions/angular-test/action.yml` (https://github.com/Babali42/DrumBeatRepo/tree/main/.github/actions)
+- DrumBeatRepo's README ("How to test it" and the engine build steps), the only contributing guidance in the repo: https://github.com/Babali42/DrumBeatRepo#readme
+- Angular's error message and stack trace (`Need to call TestBed.initTestEnvironment() first`, from `@angular/core/fesm2022/testing.mjs`), which pointed straight at the missing setup call. The next error, Angular asking for `DOCUMENT` once the setup file was in, pointed at the missing DOM environment.
+- Claude (Anthropic), via Claude Code, for prototyping the setup, making the edits from my plan, and running my course tools (issue-scout, repro-check, plan-check, pr-precheck, voice guard, ship-gate, PR monitor).
